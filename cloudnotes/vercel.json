@@ -2,14 +2,14 @@
   "version": 2,
   "builds": [
     {
-      "src": "cloudnotes/cloudnotes/wsgi.py",
+      "src": "cloudnotes/wsgi.py",
       "use": "@vercel/python"
     }
   ],
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "cloudnotes/cloudnotes/wsgi.py"
+      "dest": "cloudnotes/wsgi.py"
     }
   ]
 }
