@@ -1,0 +1,260 @@
+{% extends 'base_auth.html' %}
+{% load static %}
+
+{% block title %}Sign Up - CloudNotes{% endblock %}
+
+{% block extra_css %}
+<style>
+  :root {
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --accent-color: #6366f1;
+    --text-primary: #1f2937;
+    --text-secondary: #6b7280;
+    --bg-light: #f8fafc;
+    --border-color: #e5e7eb;
+  }
+
+  body {
+    background: var(--bg-light);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  .auth-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+  }
+
+  .auth-card {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
+    padding: 3rem;
+    width: 100%;
+    max-width: 440px;
+    position: relative;
+  }
+
+  .auth-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--primary-gradient);
+  }
+
+  .logo-section {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+
+  .logo {
+    font-size: 2rem;
+    font-weight: 800;
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .subtitle {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  .form-group {
+    margin-bottom: 1.25rem;
+  }
+
+  .form-label {
+    display: block;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.4rem;
+    font-size: 0.9rem;
+  }
+
+  .form-input {
+    width: 100%;
+    padding: 0.85rem 1rem;
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    font-size: 1rem;
+  }
+
+  .form-input:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 3px rgba(99,102,241,.1);
+  }
+
+  .btn-primary {
+    width: 100%;
+    padding: 0.9rem;
+    border-radius: 12px;
+    border: none;
+    background: var(--primary-gradient);
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 0.5rem;
+    transition: 0.2s;
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 25px rgba(99,102,241,.3);
+  }
+
+  .error-message {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #dc2626;
+    padding: 0.75rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+    text-align: center;
+  }
+
+  .success-message {
+    background: #ecfdf5;
+    border: 1px solid #a7f3d0;
+    color: #065f46;
+    padding: 0.75rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+    text-align: center;
+  }
+
+  .auth-links {
+    text-align: center;
+    margin-top: 1.5rem;
+  }
+
+  .auth-links a {
+    color: var(--accent-color);
+    text-decoration: none;
+    font-weight: 500;
+  }
+
+  @media (max-width: 480px) {
+    .form-row {
+      grid-template-columns: 1fr;
+    }
+    .auth-card {
+      padding: 2rem 1.5rem;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+  <div class="auth-card">
+
+    <div class="logo-section">
+      <h1 class="logo">CloudNotes</h1>
+      <p class="subtitle">Create your account and start sharing knowledge</p>
+    </div>
+
+    {% if messages %}
+      {% for message in messages %}
+        <div class="{% if message.tags == 'success' %}success-message{% else %}error-message{% endif %}">
+          {{ message }}
+        </div>
+      {% endfor %}
+    {% endif %}
+
+    {% if form.errors %}
+      <div class="error-message">
+        {% for field, errors in form.errors.items %}
+          {% for error in errors %}
+            <div>{{ error }}</div>
+          {% endfor %}
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">First Name</label>
+          <input
+            type="text"
+            name="first_name"
+            class="form-input"
+            value="{{ form.first_name.value|default_if_none:'' }}"
+            required
+          >
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Last Name</label>
+          <input
+            type="text"
+            name="last_name"
+            class="form-input"
+            value="{{ form.last_name.value|default_if_none:'' }}"
+            required
+          >
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Username</label>
+        <input
+          type="text"
+          name="username"
+          class="form-input"
+          value="{{ form.username.value|default_if_none:'' }}"
+          required
+        >
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input
+          type="email"
+          name="email"
+          class="form-input"
+          value="{{ form.email.value|default_if_none:'' }}"
+          required
+        >
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input type="password" name="password1" class="form-input" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Confirm Password</label>
+        <input type="password" name="password2" class="form-input" required>
+      </div>
+
+      <button type="submit" class="btn-primary">
+        Create Account
+      </button>
+    </form>
+
+    <div class="auth-links">
+      Already have an account?
+      <a href="{% url 'login' %}">Sign in</a>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,269 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Messages - CloudNotes{% endblock %}
+
+{% block extra_css %}
+<style>
+  :root {
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --accent-color: #6366f1;
+    --text-primary: #1f2937;
+    --text-secondary: #6b7280;
+    --bg-light: #f8fafc;
+    --border-color: #e5e7eb;
+  }
+
+  body { background: var(--bg-light); }
+
+  .chat-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+    height: calc(100vh - 140px);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .chat-header {
+    background: white;
+    border-radius: 20px 20px 0 0;
+    padding: 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .header-content h1 {
+    font-size: 2rem;
+    font-weight: 800;
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .new-chat-btn {
+    padding: 1rem 1.5rem;
+    background: var(--primary-gradient);
+    color: white;
+    text-decoration: none;
+    border-radius: 12px;
+    font-weight: 600;
+  }
+
+  .chat-content {
+    background: white;
+    border-radius: 0 0 20px 20px;
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+  }
+
+  .conversations-sidebar {
+    width: 350px;
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .search-bar {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .search-input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border-radius: 12px;
+    border: 2px solid var(--border-color);
+  }
+
+  .conversations-list {
+    flex: 1;
+    overflow-y: auto;
+  }
+
+  .conversation-item {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    text-decoration: none;
+    color: inherit;
+    position: relative;
+  }
+
+  .conversation-item:hover {
+    background: var(--bg-light);
+  }
+
+  .conversation-item.unread::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    background: var(--accent-color);
+    border-radius: 50%;
+    position: absolute;
+    left: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  .conversation-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--primary-gradient);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    position: relative;
+  }
+
+  .online-indicator {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    width: 12px;
+    height: 12px;
+    background: #22c55e;
+    border: 2px solid white;
+    border-radius: 50%;
+  }
+
+  .conversation-info {
+    flex: 1;
+  }
+
+  .conversation-name {
+    font-weight: 600;
+  }
+
+  .conversation-preview {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .conversation-meta {
+    text-align: right;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+  }
+
+  .unread-count {
+    background: var(--accent-color);
+    color: white;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    margin-top: 0.25rem;
+  }
+
+  .chat-main {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    text-align: center;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="chat-container">
+
+  <div class="chat-header">
+    <div class="header-content">
+      <h1>Messages</h1>
+      <p>Chat with other CloudNotes users</p>
+    </div>
+    <a href="{% url 'chat_new' %}" class="new-chat-btn">➕ New Message</a>
+  </div>
+
+  <div class="chat-content">
+
+    <!-- SIDEBAR -->
+    <div class="conversations-sidebar">
+      <div class="search-bar">
+        <input type="text" class="search-input" placeholder="Search..." onkeyup="searchConversations(this.value)">
+      </div>
+
+      <div class="conversations-list">
+        {% if conversations %}
+          {% for convo in conversations %}
+            <a href="{% url 'chat_conversation' convo.id %}"
+               class="conversation-item {% if convo.unread_count > 0 %}unread{% endif %}"
+               data-name="{{ convo.other_user.first_name|lower }} {{ convo.other_user.last_name|lower }}">
+              
+              <div class="conversation-avatar">
+                {{ convo.other_user.first_name.0|upper }}{{ convo.other_user.last_name.0|upper }}
+                {% if convo.other_user.is_online %}
+                  <div class="online-indicator"></div>
+                {% endif %}
+              </div>
+
+              <div class="conversation-info">
+                <div class="conversation-name">
+                  {{ convo.other_user.first_name }} {{ convo.other_user.last_name }}
+                </div>
+                <div class="conversation-preview">
+                  {% if convo.last_message %}
+                    {% if convo.last_message.sender == user %}You: {% endif %}
+                    {{ convo.last_message.content|truncatewords:8 }}
+                  {% else %}
+                    No messages yet
+                  {% endif %}
+                </div>
+              </div>
+
+              <div class="conversation-meta">
+                {% if convo.last_message %}
+                  {{ convo.last_message.created_at|timesince|truncatewords:1 }}
+                {% else %}
+                  New
+                {% endif %}
+                {% if convo.unread_count %}
+                  <div class="unread-count">{{ convo.unread_count }}</div>
+                {% endif %}
+              </div>
+            </a>
+          {% endfor %}
+        {% else %}
+          <div style="padding:2rem; text-align:center;">
+            💬 No conversations yet
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- MAIN -->
+    <div class="chat-main">
+      <div>
+        <div style="font-size:4rem;">💬</div>
+        <h3>Select a conversation</h3>
+        <p>Choose a chat from the left to start messaging</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+function searchConversations(query) {
+  query = query.toLowerCase();
+  document.querySelectorAll('.conversation-item').forEach(item => {
+    item.style.display = item.dataset.name.includes(query) ? 'flex' : 'none';
+  });
+}
+</script>
+{% endblock %}

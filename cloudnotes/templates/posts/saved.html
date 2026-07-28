@@ -1,0 +1,305 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Saved Posts - CloudNotes{% endblock %}
+
+{% block extra_css %}
+<style>
+:root {
+  --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --accent-color: #6366f1;
+  --text-primary: #1f2937;
+  --text-secondary: #6b7280;
+  --bg-light: #f8fafc;
+  --border-color: #e5e7eb;
+}
+
+body {
+  background: var(--bg-light);
+}
+
+.saved-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.saved-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.saved-title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  background: var(--primary-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.saved-subtitle {
+  color: var(--text-secondary);
+  margin-top: 0.5rem;
+}
+
+.saved-stats {
+  background: white;
+  border-radius: 20px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+  display: flex;
+  justify-content: center;
+  gap: 3rem;
+}
+
+.stat-item {
+  text-align: center;
+}
+
+.stat-number {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.stat-label {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+
+.filter-bar {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.filter-select,
+.search-input {
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  border: 2px solid var(--border-color);
+  font-size: 0.9rem;
+}
+
+.search-input {
+  flex: 1;
+  min-width: 200px;
+}
+
+.posts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
+
+.post-card {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+  cursor: pointer;
+  transition: 0.2s;
+  position: relative;
+}
+
+.post-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+}
+
+.saved-badge {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: #f59e0b;
+  color: white;
+  padding: 0.5rem;
+  border-radius: 50%;
+}
+
+.post-image {
+  height: 200px;
+  background: linear-gradient(45deg, #f3f4f6, #e5e7eb);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+}
+
+.post-content {
+  padding: 1.5rem;
+}
+
+.post-title {
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.post-description {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
+}
+
+.post-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid var(--border-color);
+  padding-top: 1rem;
+}
+
+.post-author {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.author-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--primary-gradient);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 0.7rem;
+}
+
+.post-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.action-btn {
+  border: 1px solid var(--border-color);
+  background: none;
+  border-radius: 8px;
+  padding: 0.4rem;
+  cursor: pointer;
+}
+
+.action-btn.remove {
+  color: #ef4444;
+  border-color: #fecaca;
+}
+
+.saved-date {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-top: 0.5rem;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: var(--text-secondary);
+}
+
+.browse-btn {
+  margin-top: 1.5rem;
+  display: inline-block;
+  padding: 1rem 2rem;
+  background: var(--primary-gradient);
+  color: white;
+  border-radius: 12px;
+  text-decoration: none;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="saved-container">
+
+  <div class="saved-header">
+    <h1 class="saved-title">Saved Posts</h1>
+    <p class="saved-subtitle">Your bookmarked study materials</p>
+  </div>
+
+  <div class="saved-stats">
+    <div class="stat-item">
+      <span class="stat-number">{{ saved_posts.count }}</span>
+      <span class="stat-label">Saved</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-number">{{ categories_count }}</span>
+      <span class="stat-label">Categories</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-number">{{ this_month_count }}</span>
+      <span class="stat-label">This Month</span>
+    </div>
+  </div>
+
+  <div class="filter-bar">
+    <select class="filter-select">
+      <option>All Categories</option>
+      <option>Mathematics</option>
+      <option>Science</option>
+      <option>Programming</option>
+    </select>
+    <input type="text" class="search-input" placeholder="Search saved posts...">
+  </div>
+
+  {% if saved_posts %}
+  <div class="posts-grid">
+    {% for saved in saved_posts %}
+    <div class="post-card" onclick="window.location.href='{% url 'post_detail' saved.post.id %}'">
+      <div class="saved-badge">🔖</div>
+
+      <div class="post-image">
+        {% if saved.post.image %}
+          <img src="{{ saved.post.image.url }}" style="width:100%;height:100%;object-fit:cover;">
+        {% else %}
+          {% if saved.post.file_type == 'pdf' %}📄
+          {% elif saved.post.file_type == 'link' %}🔗
+          {% elif saved.post.file_type == 'ebook' %}📚
+          {% else %}📝{% endif %}
+        {% endif %}
+      </div>
+
+      <div class="post-content">
+        <h3 class="post-title">{{ saved.post.title }}</h3>
+        <p class="post-description">{{ saved.post.description|truncatewords:15 }}</p>
+
+        <div class="post-meta">
+          <div class="post-author">
+            <div class="author-avatar">
+              {{ saved.post.author.first_name.0|upper }}{{ saved.post.author.last_name.0|upper }}
+            </div>
+            @{{ saved.post.author.username }}
+          </div>
+          <div class="post-actions">
+            <button class="action-btn remove" onclick="event.stopPropagation();">
+              🗑️
+            </button>
+          </div>
+        </div>
+
+        <div class="saved-date">
+          Saved {{ saved.created_at|timesince }} ago
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <h3>No saved posts yet</h3>
+    <p>Save posts to access them later.</p>
+    <a href="{% url 'browse' %}" class="browse-btn">Browse Posts</a>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

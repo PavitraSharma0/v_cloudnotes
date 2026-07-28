@@ -1,0 +1,267 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Browse - CloudNotes{% endblock %}
+
+{% block extra_css %}
+<style>
+  :root {
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --accent-color: #6366f1;
+    --text-primary: #1f2937;
+    --text-secondary: #6b7280;
+    --bg-light: #f8fafc;
+    --border-color: #e5e7eb;
+  }
+
+  body {
+    background: var(--bg-light);
+  }
+
+  .browse-container {
+    max-width: 1400px;
+    margin: auto;
+    padding: 2rem 1rem;
+  }
+
+  .browse-header {
+    text-align: center;
+    margin-bottom: 3rem;
+  }
+
+  .browse-title {
+    font-size: 3rem;
+    font-weight: 800;
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .browse-subtitle {
+    color: var(--text-secondary);
+    max-width: 600px;
+    margin: auto;
+  }
+
+  .search-box {
+    background: white;
+    border-radius: 20px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 10px rgba(0,0,0,.08);
+  }
+
+  .search-bar {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .search-input {
+    flex: 1;
+    padding: 1rem;
+    border-radius: 16px;
+    border: 2px solid var(--border-color);
+  }
+
+  .search-btn {
+    padding: 1rem 2rem;
+    border-radius: 16px;
+    background: var(--primary-gradient);
+    color: white;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .filter-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .75rem;
+  }
+
+  .filter-tag {
+    padding: .5rem 1rem;
+    border-radius: 25px;
+    border: 2px solid var(--border-color);
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: .9rem;
+  }
+
+  .filter-tag.active,
+  .filter-tag:hover {
+    background: var(--accent-color);
+    color: white;
+    border-color: var(--accent-color);
+  }
+
+  .posts-grid {
+    columns: 4;
+    column-gap: 1.5rem;
+  }
+
+  .post-card {
+    background: white;
+    border-radius: 16px;
+    margin-bottom: 1.5rem;
+    break-inside: avoid;
+    box-shadow: 0 4px 10px rgba(0,0,0,.08);
+    cursor: pointer;
+    transition: .3s;
+  }
+
+  .post-card:hover {
+    transform: translateY(-4px);
+  }
+
+  .post-image {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+  }
+
+  .post-placeholder {
+    height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    background: #f3f4f6;
+  }
+
+  .post-content {
+    padding: 1.5rem;
+  }
+
+  .post-title {
+    font-weight: 700;
+    margin-bottom: .5rem;
+  }
+
+  .post-desc {
+    color: var(--text-secondary);
+    font-size: .9rem;
+    margin-bottom: 1rem;
+  }
+
+  .post-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: .85rem;
+    color: var(--text-secondary);
+    border-top: 1px solid var(--border-color);
+    padding-top: .75rem;
+  }
+
+  .author {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+  }
+
+  .avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--primary-gradient);
+    color: white;
+    font-size: .7rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+  }
+
+  @media(max-width:1200px){.posts-grid{columns:3}}
+  @media(max-width:768px){.posts-grid{columns:2}}
+  @media(max-width:480px){.posts-grid{columns:1}}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="browse-container">
+
+  <div class="browse-header">
+    <h1 class="browse-title">Discover Knowledge</h1>
+    <p class="browse-subtitle">
+      Explore study materials shared by students worldwide
+    </p>
+  </div>
+
+  <div class="search-box">
+    <form method="get" class="search-bar">
+      <input
+        type="text"
+        name="q"
+        value="{{ request.GET.q }}"
+        class="search-input"
+        placeholder="Search notes, topics, subjects..."
+      >
+      <button class="search-btn">Search</button>
+    </form>
+
+    <div class="filter-tags">
+      <a href="{% url 'browse' %}"
+         class="filter-tag {% if not request.GET.category %}active{% endif %}">
+        All
+      </a>
+
+      {% for key,label in categories %}
+        <a href="?category={{ key }}"
+           class="filter-tag {% if request.GET.category == key %}active{% endif %}">
+          {{ label }}
+        </a>
+      {% endfor %}
+    </div>
+  </div>
+
+  {% if posts %}
+  <div class="posts-grid">
+    {% for post in posts %}
+      <div class="post-card"
+           onclick="window.location.href='{% url 'post_detail' post.id %}'">
+
+        {% if post.image %}
+          <img src="{{ post.image.url }}" class="post-image">
+        {% else %}
+          <div class="post-placeholder">
+            {% if post.file_type == 'pdf' %}📄
+            {% elif post.file_type == 'link' %}🔗
+            {% elif post.file_type == 'ebook' %}📚
+            {% else %}📝
+            {% endif %}
+          </div>
+        {% endif %}
+
+        <div class="post-content">
+          <h3 class="post-title">{{ post.title }}</h3>
+          <p class="post-desc">
+            {{ post.description|truncatewords:15 }}
+          </p>
+
+          <div class="post-meta">
+            <div class="author">
+              <div class="avatar">
+                {{ post.author.first_name.0|upper }}{{ post.author.last_name.0|upper }}
+              </div>
+              @{{ post.author.username }}
+            </div>
+            <div>
+              ❤️ {{ post.likes_count }} · 💬 {{ post.comments_count }}
+            </div>
+          </div>
+        </div>
+
+      </div>
+    {% endfor %}
+  </div>
+  {% else %}
+    <div style="text-align:center;padding:4rem;color:var(--text-secondary);">
+      <h3>No posts found</h3>
+      <p>Try searching something else or be the first to upload.</p>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}

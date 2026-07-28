@@ -1,0 +1,193 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}AI Assistant - CloudNotes{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* ✅ YOUR CSS — UNCHANGED */
+  /* (I did not touch styling at all) */
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="ai-container">
+
+  <!-- HEADER -->
+  <div class="ai-header">
+    <h1 class="ai-title">🤖 AI Study Assistant</h1>
+    <p class="ai-subtitle">
+      Get instant help with your studies, homework, and learning questions
+    </p>
+
+    <div class="ai-features">
+      <div class="feature-item">📚 Study Help</div>
+      <div class="feature-item">✏️ Homework Assistance</div>
+      <div class="feature-item">🧠 Concept Explanations</div>
+      <div class="feature-item">📝 Writing Support</div>
+    </div>
+  </div>
+
+  <!-- CHAT -->
+  <div class="ai-chat">
+    <div class="chat-messages" id="chat-messages">
+
+      {% if not messages %}
+      <!-- WELCOME -->
+      <div class="welcome-message">
+        <div class="welcome-icon">🤖</div>
+        <h3 class="welcome-title">
+          Hello {{ user.first_name|default:user.username }}!
+        </h3>
+        <p class="welcome-text">
+          Ask me anything about your studies. I can explain concepts, help with
+          homework, writing, and more.
+        </p>
+
+        <div class="suggested-questions">
+          <div class="suggestion-card" onclick="quickAsk('Explain photosynthesis in simple terms')">
+            🌱 Explain photosynthesis
+          </div>
+          <div class="suggestion-card" onclick="quickAsk('Help me solve a math problem')">
+            🔢 Solve a math problem
+          </div>
+          <div class="suggestion-card" onclick="quickAsk('How do I write a good essay introduction?')">
+            ✍️ Essay introduction
+          </div>
+          <div class="suggestion-card" onclick="quickAsk('What caused World War I?')">
+            🏛️ World War I causes
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- CHAT HISTORY -->
+      {% for msg in messages %}
+      <div class="message {{ msg.sender }}">
+        <div class="message-avatar">
+          {% if msg.sender == 'user' %}
+            {{ user.first_name.0|upper }}{{ user.last_name.0|upper }}
+          {% else %}
+            🤖
+          {% endif %}
+        </div>
+        <div class="message-content">
+          <div class="message-bubble">
+            {{ msg.content|linebreaksbr }}
+          </div>
+          <div class="message-time">
+            {{ msg.created_at|date:"g:i A" }}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+
+      <!-- TYPING -->
+      <div class="typing-indicator" id="typing-indicator">
+        <div class="message ai">
+          <div class="message-avatar">🤖</div>
+          <div class="message-content">
+            <div class="typing-bubble">
+              AI is thinking
+              <div class="typing-dots">
+                <span class="typing-dot"></span>
+                <span class="typing-dot"></span>
+                <span class="typing-dot"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- INPUT -->
+  <div class="ai-input">
+    <form class="input-container" id="ai-form">
+      {% csrf_token %}
+      <textarea
+        class="message-input"
+        id="message-input"
+        placeholder="Ask me anything about your studies..."
+        rows="1"
+      ></textarea>
+
+      <button
+        type="submit"
+        class="input-btn send-btn"
+        id="send-btn"
+        disabled
+      >➤</button>
+    </form>
+  </div>
+
+</div>
+
+<script>
+const form = document.getElementById('ai-form');
+const input = document.getElementById('message-input');
+const sendBtn = document.getElementById('send-btn');
+const messagesBox = document.getElementById('chat-messages');
+const typingIndicator = document.getElementById('typing-indicator');
+
+input.addEventListener('input', () => {
+  sendBtn.disabled = !input.value.trim();
+  input.style.height = 'auto';
+  input.style.height = Math.min(input.scrollHeight, 120) + 'px';
+});
+
+function quickAsk(text) {
+  input.value = text;
+  sendBtn.disabled = false;
+  form.requestSubmit();
+}
+
+form.addEventListener('submit', function(e) {
+  e.preventDefault();
+  const message = input.value.trim();
+  if (!message) return;
+
+  addMessage(message, 'user');
+  input.value = '';
+  sendBtn.disabled = true;
+
+  typingIndicator.style.display = 'block';
+  scrollBottom();
+
+  fetch("{% url 'ai_ask' %}", {
+    method: 'POST',
+    headers: {
+      'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ message })
+  })
+  .then(res => res.json())
+  .then(data => {
+    typingIndicator.style.display = 'none';
+    addMessage(data.reply, 'ai');
+  });
+});
+
+function addMessage(text, sender) {
+  const html = `
+    <div class="message ${sender}">
+      <div class="message-avatar">
+        ${sender === 'user' ? '{{ user.first_name.0|upper }}{{ user.last_name.0|upper }}' : '🤖'}
+      </div>
+      <div class="message-content">
+        <div class="message-bubble">${text}</div>
+        <div class="message-time">just now</div>
+      </div>
+    </div>
+  `;
+  messagesBox.insertAdjacentHTML('beforeend', html);
+  scrollBottom();
+}
+
+function scrollBottom() {
+  messagesBox.scrollTop = messagesBox.scrollHeight;
+}
+</script>
+{% endblock %}

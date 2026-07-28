@@ -1,0 +1,257 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ profile_user.username }} - CloudNotes{% endblock %}
+
+{% block extra_css %}
+<style>
+  :root {
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --accent-color: #6366f1;
+    --text-primary: #1f2937;
+    --text-secondary: #6b7280;
+    --bg-light: #f8fafc;
+    --border-color: #e5e7eb;
+  }
+
+  body { background: var(--bg-light); }
+
+  .profile-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+  }
+
+  .profile-header {
+    background: white;
+    border-radius: 20px;
+    padding: 2.5rem;
+    box-shadow: 0 4px 6px rgba(0,0,0,.1);
+    margin-bottom: 2rem;
+  }
+
+  .profile-info {
+    display: flex;
+    gap: 2rem;
+    align-items: center;
+    margin-bottom: 2rem;
+  }
+
+  .profile-avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: var(--primary-gradient);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 3rem;
+    font-weight: 700;
+  }
+
+  .profile-details h1 {
+    font-size: 2.3rem;
+    font-weight: 800;
+  }
+
+  .profile-username {
+    color: var(--text-secondary);
+    margin-bottom: .75rem;
+  }
+
+  .profile-bio {
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+  }
+
+  .profile-stats {
+    display: flex;
+    gap: 2rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .stat-item {
+    text-align: center;
+  }
+
+  .stat-number {
+    font-size: 1.6rem;
+    font-weight: 800;
+  }
+
+  .stat-label {
+    font-size: .85rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+  }
+
+  .profile-actions {
+    display: flex;
+    gap: 1rem;
+  }
+
+  .btn {
+    padding: .75rem 1.5rem;
+    border-radius: 12px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+  }
+
+  .btn-primary {
+    background: var(--primary-gradient);
+    color: white;
+  }
+
+  .btn-secondary {
+    background: white;
+    border: 2px solid var(--border-color);
+    color: var(--text-primary);
+  }
+
+  .posts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px,1fr));
+    gap: 1.5rem;
+  }
+
+  .post-card {
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0,0,0,.1);
+    cursor: pointer;
+  }
+
+  .post-image {
+    height: 200px;
+    background: #e5e7eb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+  }
+
+  .post-content {
+    padding: 1.25rem;
+  }
+
+  .post-title {
+    font-weight: 700;
+    margin-bottom: .5rem;
+  }
+
+  .post-description {
+    font-size: .9rem;
+    color: var(--text-secondary);
+  }
+
+  .post-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: .8rem;
+    color: var(--text-secondary);
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--text-secondary);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+
+  <!-- PROFILE HEADER -->
+  <div class="profile-header">
+
+    <div class="profile-info">
+      <div class="profile-avatar">
+        {{ profile_user.first_name|default:profile_user.username|first|upper }}
+      </div>
+
+      <div class="profile-details">
+        <h1>{{ profile_user.get_full_name|default:profile_user.username }}</h1>
+        <div class="profile-username">@{{ profile_user.username }}</div>
+        <div class="profile-bio">
+          {{ profile_user.profile.bio|default:"Sharing knowledge on CloudNotes." }}
+        </div>
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="profile-stats">
+      <div class="stat-item">
+        <span class="stat-number">{{ followers_count }}</span>
+        <span class="stat-label">Followers</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-number">{{ following_count }}</span>
+        <span class="stat-label">Following</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-number">{{ posts_count }}</span>
+        <span class="stat-label">Posts</span>
+      </div>
+    </div>
+
+    <!-- ACTIONS -->
+    <div class="profile-actions">
+      {% if user == profile_user %}
+        <a href="{% url 'upload_post' %}" class="btn btn-primary">Upload</a>
+      {% else %}
+        <form method="post" action="{% url 'toggle_follow' profile_user.username %}">
+          {% csrf_token %}
+          {% if is_following %}
+            <button class="btn btn-secondary">Unfollow</button>
+          {% else %}
+            <button class="btn btn-primary">Follow</button>
+          {% endif %}
+        </form>
+
+        <a href="{% url 'chat_room' profile_user.username %}" class="btn btn-secondary">
+          Message
+        </a>
+      {% endif %}
+    </div>
+
+  </div>
+
+  <!-- POSTS -->
+  {% if posts %}
+    <div class="posts-grid">
+      {% for post in posts %}
+        <div class="post-card" onclick="location.href='{% url 'post_detail' post.id %}'">
+          <div class="post-image">
+            {% if post.image %}
+              <img src="{{ post.image.url }}" style="width:100%;height:100%;object-fit:cover;">
+            {% else %}
+              📄
+            {% endif %}
+          </div>
+
+          <div class="post-content">
+            <div class="post-title">{{ post.title }}</div>
+            <div class="post-description">
+              {{ post.description|truncatewords:18 }}
+            </div>
+            <div class="post-meta">
+              <span>{{ post.created_at|date:"M d, Y" }}</span>
+              <span>❤️ {{ post.likes_count }} · 💬 {{ post.comments_count }}</span>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      No posts yet.
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}

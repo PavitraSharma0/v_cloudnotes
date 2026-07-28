@@ -1,0 +1,330 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Upload Post - CloudNotes{% endblock %}
+
+{% block extra_css %}
+<style>
+:root {
+  --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --accent-color: #6366f1;
+  --text-primary: #1f2937;
+  --text-secondary: #6b7280;
+  --bg-light: #f8fafc;
+  --border-color: #e5e7eb;
+}
+
+body {
+  background: var(--bg-light);
+}
+
+.upload-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.upload-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.upload-title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  background: var(--primary-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.upload-subtitle {
+  color: var(--text-secondary);
+  margin-top: .5rem;
+}
+
+.upload-form {
+  background: white;
+  border-radius: 20px;
+  padding: 3rem;
+  box-shadow: 0 4px 6px rgba(0,0,0,.08);
+}
+
+.form-section {
+  margin-bottom: 2.5rem;
+}
+
+.section-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-label {
+  font-weight: 600;
+  margin-bottom: .5rem;
+  display: block;
+}
+
+.form-input,
+.form-textarea,
+.form-select {
+  width: 100%;
+  padding: 1rem;
+  border-radius: 12px;
+  border: 2px solid var(--border-color);
+}
+
+.form-textarea {
+  min-height: 120px;
+}
+
+.tabs {
+  display: flex;
+  background: var(--bg-light);
+  border-radius: 14px;
+  padding: .5rem;
+  margin-bottom: 1.5rem;
+}
+
+.tab-btn {
+  flex: 1;
+  border: none;
+  background: none;
+  padding: .75rem;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 10px;
+  color: var(--text-secondary);
+}
+
+.tab-btn.active {
+  background: white;
+  color: var(--accent-color);
+  box-shadow: 0 2px 4px rgba(0,0,0,.1);
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+.upload-box {
+  border: 2px dashed var(--border-color);
+  border-radius: 16px;
+  padding: 3rem 2rem;
+  text-align: center;
+  cursor: pointer;
+}
+
+.upload-box:hover {
+  border-color: var(--accent-color);
+}
+
+.upload-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.file-input {
+  display: none;
+}
+
+.preview {
+  margin-top: 1rem;
+  color: var(--text-secondary);
+  font-size: .9rem;
+}
+
+.tags-display {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+}
+
+.tag {
+  background: var(--accent-color);
+  color: white;
+  padding: .4rem .8rem;
+  border-radius: 20px;
+  font-size: .8rem;
+}
+
+.tag button {
+  border: none;
+  background: none;
+  color: white;
+  margin-left: .3rem;
+  cursor: pointer;
+}
+
+.submit-section {
+  border-top: 1px solid var(--border-color);
+  padding-top: 2rem;
+  text-align: center;
+}
+
+.btn-primary {
+  background: var(--primary-gradient);
+  color: white;
+  padding: 1rem 3rem;
+  border-radius: 16px;
+  border: none;
+  font-weight: 700;
+  cursor: pointer;
+  margin-right: 1rem;
+}
+
+.btn-secondary {
+  padding: 1rem 2rem;
+  border-radius: 16px;
+  border: 2px solid var(--border-color);
+  background: white;
+  font-weight: 600;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="upload-container">
+
+  <div class="upload-header">
+    <h1 class="upload-title">Share Your Knowledge</h1>
+    <p class="upload-subtitle">Upload notes, PDFs, images or links</p>
+  </div>
+
+  <form class="upload-form" method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    <!-- BASIC INFO -->
+    <div class="form-section">
+      <h3 class="section-title">📝 Basic Information</h3>
+
+      <div class="form-group">
+        <label class="form-label">Title *</label>
+        <input type="text" name="title" class="form-input" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Description *</label>
+        <textarea name="description" class="form-textarea" required></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Category *</label>
+        <select name="category" class="form-select" required>
+          <option value="">Select category</option>
+          <option value="mathematics">Mathematics</option>
+          <option value="science">Science</option>
+          <option value="literature">Literature</option>
+          <option value="history">History</option>
+          <option value="programming">Programming</option>
+          <option value="business">Business</option>
+          <option value="design">Design</option>
+          <option value="languages">Languages</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="form-section">
+      <h3 class="section-title">📎 Content</h3>
+
+      <div class="tabs">
+        <button type="button" class="tab-btn active" onclick="switchTab('image', this)">🖼 Image</button>
+        <button type="button" class="tab-btn" onclick="switchTab('file', this)">📄 File</button>
+        <button type="button" class="tab-btn" onclick="switchTab('link', this)">🔗 Link</button>
+      </div>
+
+      <div id="image" class="tab-content active">
+        <label class="upload-box">
+          <div class="upload-icon">🖼️</div>
+          <p>Upload image</p>
+          <input type="file" name="image" class="file-input" accept="image/*" onchange="previewFile(this,'image-preview')">
+        </label>
+        <div id="image-preview" class="preview"></div>
+      </div>
+
+      <div id="file" class="tab-content">
+        <label class="upload-box">
+          <div class="upload-icon">📄</div>
+          <p>Upload file (PDF / Ebook)</p>
+          <input type="file" name="file" class="file-input" onchange="previewFile(this,'file-preview')">
+        </label>
+        <div id="file-preview" class="preview"></div>
+      </div>
+
+      <div id="link" class="tab-content">
+        <label class="form-label">External Link</label>
+        <input type="url" name="link_url" class="form-input" placeholder="https://example.com">
+      </div>
+    </div>
+
+    <!-- TAGS -->
+    <div class="form-section">
+      <h3 class="section-title">🏷 Tags</h3>
+      <div class="tags-display" id="tags-display"></div>
+      <input type="text" class="form-input" placeholder="Press Enter to add tag" onkeydown="addTag(event)">
+      <input type="hidden" name="tags" id="tags-hidden">
+    </div>
+
+    <!-- SUBMIT -->
+    <div class="submit-section">
+      <button type="submit" name="action" value="publish" class="btn-primary">🚀 Publish</button>
+      <button type="submit" name="action" value="draft" class="btn-secondary">💾 Save Draft</button>
+    </div>
+
+  </form>
+</div>
+
+<script>
+let tags = [];
+
+function switchTab(id, btn) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function previewFile(input, target) {
+  if (input.files.length > 0) {
+    document.getElementById(target).innerText = input.files[0].name;
+  }
+}
+
+function addTag(e) {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    let val = e.target.value.trim().toLowerCase();
+    if (val && !tags.includes(val)) {
+      tags.push(val);
+      renderTags();
+    }
+    e.target.value = '';
+  }
+}
+
+function renderTags() {
+  let d = document.getElementById('tags-display');
+  let h = document.getElementById('tags-hidden');
+  d.innerHTML = '';
+  tags.forEach((t,i) => {
+    d.innerHTML += `<span class="tag">${t}<button onclick="removeTag(${i})">×</button></span>`;
+  });
+  h.value = tags.join(',');
+}
+
+function removeTag(i) {
+  tags.splice(i,1);
+  renderTags();
+}
+</script>
+{% endblock %}

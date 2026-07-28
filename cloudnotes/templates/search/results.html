@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+
+  <h4>Search results for "{{ query }}"</h4>
+
+  <hr>
+
+  <h5>Users</h5>
+  {% if users %}
+    {% for u in users %}
+      <p>
+        <a href="{% url 'profile' u.username %}">
+          @{{ u.username }}
+        </a>
+      </p>
+    {% endfor %}
+  {% else %}
+    <p class="text-muted">No users found</p>
+  {% endif %}
+
+  <hr>
+
+  <h5>Posts</h5>
+  {% if posts %}
+    {% for post in posts %}
+      <p>
+        <a href="{% url 'post_detail' post.id %}">
+          {{ post.title }}
+        </a>
+      </p>
+    {% endfor %}
+  {% else %}
+    <p class="text-muted">No posts found</p>
+  {% endif %}
+
+</div>
+{% endblock %}

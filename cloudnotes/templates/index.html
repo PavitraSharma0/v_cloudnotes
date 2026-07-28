@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard - CloudNotes{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+
+  <!-- Welcome -->
+  <section class="d-flex justify-content-between align-items-start mb-4">
+    <div>
+      <h2>
+        Welcome back,
+        {{ user.get_full_name|default:user.username|default:user.email }}!
+      </h2>
+      <p class="text-muted">Ready to dive into your study materials?</p>
+    </div>
+
+    <div class="card p-3">
+      <h6 class="mb-1">🤖 AI Study Assistant</h6>
+      <p class="small text-muted mb-2">Get instant help with your notes</p>
+      <a href="{% url 'ai_assistant' %}" class="btn btn-sm btn-outline-primary">
+        Ask AI
+      </a>
+    </div>
+  </section>
+
+  <!-- Stats -->
+  <section class="row g-3 mb-4 text-center">
+    <div class="col-6 col-md-3">
+      <div class="card p-3">
+        <h3>{{ saved_count }}</h3>
+        <small class="text-muted">Saved Posts</small>
+      </div>
+    </div>
+
+    <div class="col-6 col-md-3">
+      <div class="card p-3">
+        <h3>{{ uploads_count }}</h3>
+        <small class="text-muted">Uploaded</small>
+      </div>
+    </div>
+
+    <div class="col-6 col-md-3">
+      <div class="card p-3">
+        <h3>{{ followers_count }}</h3>
+        <small class="text-muted">Followers</small>
+      </div>
+    </div>
+
+    <div class="col-6 col-md-3">
+      <div class="card p-3">
+        <h3>{{ following_count }}</h3>
+        <small class="text-muted">Following</small>
+      </div>
+    </div>
+  </section>
+
+  <div class="row">
+
+    <!-- Saved -->
+    <div class="col-lg-6 mb-4">
+      <h5>Recently Saved</h5>
+      {% for post in recent_saved_posts %}
+        <div class="card p-2 mb-2">
+          <a href="{% url 'post_detail' post.id %}">
+            {{ post.title }}
+          </a>
+          <small class="text-muted">
+            by @{{ post.author.username }}
+          </small>
+        </div>
+      {% empty %}
+        <p class="text-muted">No saved posts.</p>
+      {% endfor %}
+    </div>
+
+    <!-- Uploads -->
+    <div class="col-lg-6 mb-4">
+      <h5>Your Uploads</h5>
+      {% for post in recent_uploads %}
+        <div class="card p-2 mb-2">
+          <a href="{% url 'post_detail' post.id %}">
+            {{ post.title }}
+          </a>
+          <small class="text-muted">
+            {{ post.created_at|timesince }} ago
+          </small>
+        </div>
+      {% empty %}
+        <p class="text-muted">No uploads yet.</p>
+      {% endfor %}
+    </div>
+
+    <!-- Notifications -->
+    <div class="col-lg-6 mb-4">
+      <h5>Recent Activity</h5>
+      {% for n in recent_notifications %}
+        <div class="card p-2 mb-2">
+          <strong>{{ n.actor.username }}</strong>
+          {{ n.verb }}
+          <small class="text-muted d-block">
+            {{ n.created_at|timesince }} ago
+          </small>
+        </div>
+      {% empty %}
+        <p class="text-muted">No activity.</p>
+      {% endfor %}
+    </div>
+
+    <!-- Actions -->
+    <div class="col-lg-6 mb-4">
+      <h5>Quick Actions</h5>
+      <a href="{% url 'upload_post' %}" class="btn btn-outline-primary mb-2">📤 Upload</a>
+      <a href="{% url 'browse' %}" class="btn btn-outline-success mb-2">🔍 Browse</a>
+      <a href="{% url 'notifications' %}" class="btn btn-outline-secondary mb-2">🔔 Notifications</a>
+      <a href="{% url 'ai_assistant' %}" class="btn btn-outline-dark mb-2">🤖 AI</a>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
