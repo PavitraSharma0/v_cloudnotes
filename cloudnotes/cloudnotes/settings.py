@@ -97,13 +97,7 @@ WSGI_APPLICATION = 'cloudnotes.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-MONGODB_URI = os.getenv(
-    "MONGODB_URI",
-    os.getenv(
-        "DATABASE_URL",
-        "mongodb+srv://spavitra9211_db_user:dzrvaZrjPhWuvWmN@vcloudnotes.xxqnpru.mongodb.net/vcloudnotes?retryWrites=true&w=majority"
-    )
-)
+MONGODB_URI = os.getenv("MONGODB_URI") or os.getenv("DATABASE_URL", "")
 
 mongo_options = {
     'tls': True,
@@ -187,5 +181,5 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "spavitra9211@gmail.com")
-EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "tullchqntclxsehv")
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
