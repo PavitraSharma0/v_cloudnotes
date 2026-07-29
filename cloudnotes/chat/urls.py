@@ -9,7 +9,7 @@ urlpatterns = [
     path('new/', views.new_chat, name='chat_new'),
 
     # Conversation detail by ID
-    path('<int:convo_id>/', views.conversation_detail, name='chat_conversation'),
+    path('<str:convo_id>/', views.conversation_detail, name='chat_conversation'),
 
     # Create / redirect to conversation using username
     path('<str:username>/', views.chat_room, name='chat_room'),

@@ -29,7 +29,7 @@ urlpatterns = [
     # Post Detail
     # ---------------------------
     path(
-        "post/<int:post_id>/",
+        "post/<str:post_id>/",
         views.post_detail,
         name="post_detail",
     ),
@@ -47,12 +47,12 @@ urlpatterns = [
     # Actions (Like / Save)
     # ---------------------------
     path(
-        "like/<int:post_id>/",
+        "like/<str:post_id>/",
         views.toggle_like,
         name="toggle_like",
     ),
     path(
-        "save/<int:post_id>/",
+        "save/<str:post_id>/",
         views.toggle_save,
         name="toggle_save",
     ),
