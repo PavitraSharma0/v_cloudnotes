@@ -1,72 +1,520 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}AI Assistant - CloudNotes{% endblock %}
+{% block title %}AI Study Assistant & Quiz Generator - CloudNotes{% endblock %}
 
 {% block extra_css %}
 <style>
-  /* ✅ YOUR CSS — UNCHANGED */
-  /* (I did not touch styling at all) */
+  :root {
+    --ai-primary: #6366f1;
+    --ai-primary-hover: #4f46e5;
+    --ai-secondary: #ec4899;
+    --ai-bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #311042 100%);
+    --chat-user-bg: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    --chat-ai-bg: #1e293b;
+    --card-border: rgba(255, 255, 255, 0.1);
+  }
+
+  body {
+    background-color: #090d16;
+    color: #f8fafc;
+  }
+
+  .ai-wrapper {
+    max-width: 1100px;
+    margin: 20px auto;
+    padding: 0 15px;
+  }
+
+  /* HEADER BANNER */
+  .ai-hero-banner {
+    background: var(--ai-bg-gradient);
+    border-radius: 20px;
+    padding: 30px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 25px;
+  }
+
+  .ai-hero-banner::before {
+    content: '';
+    position: absolute;
+    top: -50px;
+    right: -50px;
+    width: 250px;
+    height: 250px;
+    background: radial-gradient(circle, rgba(99, 102, 241, 0.35) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+  }
+
+  .ai-hero-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+  }
+
+  .ai-title-group h1 {
+    font-size: 2rem;
+    font-weight: 800;
+    margin: 0;
+    background: linear-gradient(to right, #ffffff, #a5b4fc, #c084fc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .ai-title-group p {
+    color: #94a3b8;
+    margin: 5px 0 0 0;
+    font-size: 0.95rem;
+  }
+
+  .ai-mode-tabs {
+    display: flex;
+    background: rgba(15, 23, 42, 0.6);
+    padding: 5px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .mode-tab {
+    padding: 8px 18px;
+    border-radius: 8px;
+    color: #94a3b8;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    border: none;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .mode-tab.active {
+    background: var(--ai-primary);
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+  }
+
+  .ai-chips-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+  }
+
+  .chip-btn {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #e2e8f0;
+    padding: 8px 14px;
+    border-radius: 30px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .chip-btn:hover {
+    background: rgba(99, 102, 241, 0.2);
+    border-color: rgba(99, 102, 241, 0.5);
+    color: #ffffff;
+    transform: translateY(-2px);
+  }
+
+  .chip-btn.quiz-chip {
+    background: linear-gradient(135deg, rgba(236, 72, 153, 0.2), rgba(168, 85, 247, 0.2));
+    border-color: rgba(236, 72, 153, 0.4);
+    color: #f472b6;
+  }
+
+  .chip-btn.quiz-chip:hover {
+    background: linear-gradient(135deg, rgba(236, 72, 153, 0.4), rgba(168, 85, 247, 0.4));
+    color: #ffffff;
+  }
+
+  /* CHAT CONTAINER */
+  .ai-chat-box {
+    background: #0f172a;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    display: flex;
+    flex-direction: column;
+    height: 580px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+  }
+
+  .chat-messages {
+    flex: 1;
+    padding: 25px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    scroll-behavior: smooth;
+  }
+
+  /* MESSAGE BUBBLES */
+  .message {
+    display: flex;
+    gap: 14px;
+    max-width: 85%;
+    animation: fadeIn 0.3s ease-in-out;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .message.user {
+    align-self: flex-end;
+    flex-direction: row-reverse;
+  }
+
+  .message.ai {
+    align-self: flex-start;
+  }
+
+  .message-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+  }
+
+  .message.user .message-avatar {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: #ffffff;
+    box-shadow: 0 4px 10px rgba(99, 102, 241, 0.3);
+  }
+
+  .message.ai .message-avatar {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: #ffffff;
+    box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
+  }
+
+  .message-bubble {
+    padding: 14px 18px;
+    border-radius: 16px;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    word-break: break-word;
+  }
+
+  .message.user .message-bubble {
+    background: var(--chat-user-bg);
+    color: #ffffff;
+    border-bottom-right-radius: 4px;
+  }
+
+  .message.ai .message-bubble {
+    background: var(--chat-ai-bg);
+    color: #e2e8f0;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-bottom-left-radius: 4px;
+  }
+
+  .message-time {
+    font-size: 0.75rem;
+    color: #64748b;
+    margin-top: 5px;
+  }
+
+  .message.user .message-time {
+    text-align: right;
+  }
+
+  /* CODE BLOCKS */
+  pre.code-block {
+    background: #090d16;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 14px;
+    overflow-x: auto;
+    font-family: 'Fira Code', 'Consolas', monospace;
+    font-size: 0.88rem;
+    color: #38bdf8;
+    margin: 10px 0;
+  }
+
+  /* TYPING INDICATOR */
+  .typing-indicator {
+    display: none;
+  }
+
+  .typing-bubble {
+    background: var(--chat-ai-bg);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 12px 18px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #94a3b8;
+    font-size: 0.9rem;
+  }
+
+  .typing-dots {
+    display: flex;
+    gap: 4px;
+  }
+
+  .typing-dot {
+    width: 6px;
+    height: 6px;
+    background: #6366f1;
+    border-radius: 50%;
+    animation: bounce 1.4s infinite ease-in-out both;
+  }
+
+  .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+  .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+
+  @keyframes bounce {
+    0%, 80%, 100% { transform: scale(0); }
+    40% { transform: scale(1); }
+  }
+
+  /* INPUT AREA */
+  .ai-input-area {
+    padding: 18px 25px;
+    background: #0b1120;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .input-wrapper {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    background: #1e293b;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 14px;
+    padding: 8px 14px;
+    transition: border-color 0.2s ease;
+  }
+
+  .input-wrapper:focus-within {
+    border-color: var(--ai-primary);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+  }
+
+  .message-textarea {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #ffffff;
+    font-size: 0.95rem;
+    resize: none;
+    max-height: 120px;
+    font-family: inherit;
+  }
+
+  .message-textarea::placeholder {
+    color: #64748b;
+  }
+
+  .send-btn-main {
+    background: var(--ai-primary);
+    color: #ffffff;
+    border: none;
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+  }
+
+  .send-btn-main:hover:not(:disabled) {
+    background: var(--ai-primary-hover);
+    transform: scale(1.05);
+  }
+
+  .send-btn-main:disabled {
+    background: #334155;
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+
+  /* QUIZ MODAL */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(8px);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .modal-overlay.active {
+    display: flex;
+  }
+
+  .quiz-modal {
+    background: #0f172a;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 20px;
+    width: 90%;
+    max-width: 600px;
+    padding: 30px;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.6);
+  }
+
+  .quiz-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
+  .quiz-modal-header h3 {
+    margin: 0;
+    color: #ffffff;
+    font-size: 1.3rem;
+  }
+
+  .close-modal-btn {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    font-size: 1.5rem;
+    cursor: pointer;
+  }
+
+  .quiz-input-group {
+    margin-bottom: 20px;
+  }
+
+  .quiz-input-group label {
+    display: block;
+    color: #cbd5e1;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+
+  .quiz-input {
+    width: 100%;
+    background: #1e293b;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 12px;
+    color: #ffffff;
+    font-size: 0.95rem;
+    outline: none;
+  }
+
+  .generate-quiz-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #ec4899, #8b5cf6);
+    color: #ffffff;
+    border: none;
+    padding: 14px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+  }
+
+  .generate-quiz-btn:hover {
+    opacity: 0.9;
+  }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="ai-container">
+<div class="ai-wrapper">
 
-  <!-- HEADER -->
-  <div class="ai-header">
-    <h1 class="ai-title">🤖 AI Study Assistant</h1>
-    <p class="ai-subtitle">
-      Get instant help with your studies, homework, and learning questions
-    </p>
+  <!-- HERO BANNER -->
+  <div class="ai-hero-banner">
+    <div class="ai-hero-header">
+      <div class="ai-title-group">
+        <h1>🤖 AI Study Assistant & Quiz Generator</h1>
+        <p>Powered by Groq LLaMA-3.3 70B — Ask anything, generate quizzes, & solve homework instantly!</p>
+      </div>
 
-    <div class="ai-features">
-      <div class="feature-item">📚 Study Help</div>
-      <div class="feature-item">✏️ Homework Assistance</div>
-      <div class="feature-item">🧠 Concept Explanations</div>
-      <div class="feature-item">📝 Writing Support</div>
+      <div class="ai-mode-tabs">
+        <button class="mode-tab active" id="tab-chat" onclick="setMode('chat')">
+          💬 Chat Assistant
+        </button>
+        <button class="mode-tab" id="tab-quiz" onclick="openQuizModal()">
+          🎯 Generate Quiz
+        </button>
+      </div>
+    </div>
+
+    <!-- QUICK PROMPT CHIPS -->
+    <div class="ai-chips-row">
+      <button class="chip-btn quiz-chip" onclick="openQuizModal()">
+        🎯 Generate 5-Q Quiz
+      </button>
+      <button class="chip-btn" onclick="quickAsk('Explain Java Object-Oriented Programming with code examples')">
+        ☕ Java OOP Concept
+      </button>
+      <button class="chip-btn" onclick="quickAsk('Explain photosynthesis step by step')">
+        🌱 Photosynthesis
+      </button>
+      <button class="chip-btn" onclick="quickAsk('Help me solve a math calculus integration problem')">
+        🧮 Math Solver
+      </button>
+      <button class="chip-btn" onclick="quickAsk('Give me a 3-paragraph essay outline for World War I')">
+        ✍️ Essay Outline
+      </button>
     </div>
   </div>
 
-  <!-- CHAT -->
-  <div class="ai-chat">
+  <!-- CHAT CONTAINER -->
+  <div class="ai-chat-box">
     <div class="chat-messages" id="chat-messages">
 
       {% if not messages %}
-      <!-- WELCOME -->
-      <div class="welcome-message">
-        <div class="welcome-icon">🤖</div>
-        <h3 class="welcome-title">
-          Hello {{ user.first_name|default:user.username }}!
-        </h3>
-        <p class="welcome-text">
-          Ask me anything about your studies. I can explain concepts, help with
-          homework, writing, and more.
-        </p>
-
-        <div class="suggested-questions">
-          <div class="suggestion-card" onclick="quickAsk('Explain photosynthesis in simple terms')">
-            🌱 Explain photosynthesis
+      <!-- WELCOME BOX -->
+      <div class="message ai">
+        <div class="message-avatar">🤖</div>
+        <div class="message-content">
+          <div class="message-bubble">
+            <strong>Hello {{ user.first_name|default:user.username }}! 👋</strong><br><br>
+            I'm your <strong>Groq LLaMA-3.3-70B AI Study Assistant</strong>.<br>
+            Ask me any questions about your studies, code, math, or click <strong>🎯 Generate Quiz</strong> to test your knowledge!
           </div>
-          <div class="suggestion-card" onclick="quickAsk('Help me solve a math problem')">
-            🔢 Solve a math problem
-          </div>
-          <div class="suggestion-card" onclick="quickAsk('How do I write a good essay introduction?')">
-            ✍️ Essay introduction
-          </div>
-          <div class="suggestion-card" onclick="quickAsk('What caused World War I?')">
-            🏛️ World War I causes
-          </div>
+          <div class="message-time">just now</div>
         </div>
       </div>
       {% endif %}
 
-      <!-- CHAT HISTORY -->
+      <!-- CHAT HISTORY FROM DATABASE -->
       {% for msg in messages %}
       <div class="message {{ msg.sender }}">
         <div class="message-avatar">
           {% if msg.sender == 'user' %}
-            {{ user.first_name.0|upper }}{{ user.last_name.0|upper }}
+            {{ user.username.0|upper }}
           {% else %}
             🤖
           {% endif %}
@@ -82,13 +530,13 @@
       </div>
       {% endfor %}
 
-      <!-- TYPING -->
+      <!-- TYPING INDICATOR -->
       <div class="typing-indicator" id="typing-indicator">
         <div class="message ai">
           <div class="message-avatar">🤖</div>
           <div class="message-content">
             <div class="typing-bubble">
-              AI is thinking
+              Groq AI is thinking
               <div class="typing-dots">
                 <span class="typing-dot"></span>
                 <span class="typing-dot"></span>
@@ -100,28 +548,52 @@
       </div>
 
     </div>
+
+    <!-- INPUT AREA -->
+    <div class="ai-input-area">
+      <form class="input-wrapper" id="ai-form">
+        {% csrf_token %}
+        <textarea
+          class="message-textarea"
+          id="message-input"
+          placeholder="Ask any study question or topic (e.g. Java, Physics, History)..."
+          rows="1"
+        ></textarea>
+        <button type="submit" class="send-btn-main" id="send-btn" disabled>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="22" y1="2" x2="11" y2="13"></line>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+          </svg>
+        </button>
+      </form>
+    </div>
   </div>
 
-  <!-- INPUT -->
-  <div class="ai-input">
-    <form class="input-container" id="ai-form">
-      {% csrf_token %}
-      <textarea
-        class="message-input"
-        id="message-input"
-        placeholder="Ask me anything about your studies..."
-        rows="1"
-      ></textarea>
+</div>
 
-      <button
-        type="submit"
-        class="input-btn send-btn"
-        id="send-btn"
-        disabled
-      >➤</button>
-    </form>
+<!-- QUIZ GENERATOR MODAL -->
+<div class="modal-overlay" id="quiz-modal">
+  <div class="quiz-modal">
+    <div class="quiz-modal-header">
+      <h3>🎯 Instant AI Quiz Generator</h3>
+      <button class="close-modal-btn" onclick="closeQuizModal()">&times;</button>
+    </div>
+    <div class="quiz-input-group">
+      <label>Enter Subject or Topic for Quiz:</label>
+      <input type="text" id="quiz-topic" class="quiz-input" placeholder="e.g. Java Programming, Photosynthesis, World History..." value="Java Programming">
+    </div>
+    <div class="quiz-input-group">
+      <label>Difficulty Level:</label>
+      <select id="quiz-difficulty" class="quiz-input">
+        <option value="Beginner">Beginner</option>
+        <option value="Intermediate" selected>Intermediate</option>
+        <option value="Advanced">Advanced</option>
+      </select>
+    </div>
+    <button class="generate-quiz-btn" onclick="startQuizGeneration()">
+      🚀 Generate 5-Question Quiz Now
+    </button>
   </div>
-
 </div>
 
 <script>
@@ -143,6 +615,23 @@ function quickAsk(text) {
   form.requestSubmit();
 }
 
+function openQuizModal() {
+  document.getElementById('quiz-modal').classList.add('active');
+}
+
+function closeQuizModal() {
+  document.getElementById('quiz-modal').classList.remove('active');
+}
+
+function startQuizGeneration() {
+  const topic = document.getElementById('quiz-topic').value.trim() || 'General Science';
+  const level = document.getElementById('quiz-difficulty').value;
+  closeQuizModal();
+  
+  const prompt = `Create an interactive 5-question multiple choice quiz on the topic "${topic}" (${level} level). For each question, provide 4 options (A, B, C, D) and clearly state the correct answer with an explanation at the end!`;
+  quickAsk(prompt);
+}
+
 form.addEventListener('submit', function(e) {
   e.preventDefault();
   const message = input.value.trim();
@@ -150,6 +639,7 @@ form.addEventListener('submit', function(e) {
 
   addMessage(message, 'user');
   input.value = '';
+  input.style.height = 'auto';
   sendBtn.disabled = true;
 
   typingIndicator.style.display = 'block';
@@ -164,7 +654,7 @@ form.addEventListener('submit', function(e) {
     body: JSON.stringify({ message })
   })
   .then(res => {
-    if (!res.ok) throw new Error('Server response error');
+    if (!res.ok) throw new Error('Server error');
     return res.json();
   })
   .then(data => {
@@ -181,8 +671,17 @@ form.addEventListener('submit', function(e) {
   });
 });
 
+function formatMarkdown(text) {
+  let formatted = text
+    .replace(/```([\s\S]*?)```/g, '<pre class="code-block"><code>$1</code></pre>')
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+    .replace(/\n/g, '<br>');
+  return formatted;
+}
+
 function addMessage(text, sender) {
-  const formattedText = text.replace(/\n/g, '<br>');
+  const formattedText = formatMarkdown(text);
   const userInitial = '{{ user.username.0|upper }}';
   const html = `
     <div class="message ${sender}">
