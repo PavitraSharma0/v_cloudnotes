@@ -16,12 +16,19 @@ import shutil
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+try:
+    import dotenv
+    dotenv.load_dotenv(BASE_DIR / ".env")
+    dotenv.load_dotenv(BASE_DIR.parent / ".env")
+except Exception:
+    pass
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-+!6o2osuw8id^)utcm(mztx1mg8n0oj$rgba98o-$bo7*1ux!n'
+SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-+!6o2osuw8id^)utcm(mztx1mg8n0oj$rgba98o-$bo7*1ux!n")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "False") == "True"
@@ -90,55 +97,50 @@ WSGI_APPLICATION = 'cloudnotes.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-DATABASE_URL = os.getenv("DATABASE_URL")
+MONGODB_URI = os.getenv(
+    "MONGODB_URI",
+    os.getenv(
+        "DATABASE_URL",
+        "mongodb+srv://spavitra9211_db_user:dzrvaZrjPhWuvWmN@vcloudnotes.xxqnpru.mongodb.net/vcloudnotes?retryWrites=true&w=majority"
+    )
+)
 
-if DATABASE_URL:
+mongo_options = {
+    'tls': True,
+    'tlsAllowInvalidCertificates': True,
+}
+try:
+    import certifi
+    mongo_options['tlsCAFile'] = certifi.where()
+except Exception:
+    pass
+
+if MONGODB_URI.startswith("mongodb://") or MONGODB_URI.startswith("mongodb+srv://"):
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django_mongodb_backend',
+            'NAME': 'vcloudnotes',
+            'HOST': MONGODB_URI,
+            'OPTIONS': mongo_options,
+        }
+    }
+else:
     try:
         import dj_database_url
         DATABASES = {
             'default': dj_database_url.config(
-                default=DATABASE_URL,
+                default=MONGODB_URI,
                 conn_max_age=600,
                 conn_health_checks=True,
             )
         }
-    except ImportError:
-        import urllib.parse
-        url = urllib.parse.urlparse(DATABASE_URL)
+    except Exception:
         DATABASES = {
             'default': {
-                'ENGINE': 'django.db.backends.postgresql',
-                'NAME': url.path[1:],
-                'USER': url.username,
-                'PASSWORD': url.password,
-                'HOST': url.hostname,
-                'PORT': url.port or '',
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': BASE_DIR / 'db.sqlite3',
             }
         }
-else:
-    IS_SERVERLESS = (
-        os.getenv("VERCEL") == "1"
-        or os.getenv("VERCEL_ENV") is not None
-        or not os.access(BASE_DIR, os.W_OK)
-    )
-
-    if IS_SERVERLESS:
-        DB_PATH = Path("/tmp") / "db.sqlite3"
-        seed_db = BASE_DIR / "db.sqlite3"
-        if not DB_PATH.exists() and seed_db.exists():
-            try:
-                shutil.copy2(seed_db, DB_PATH)
-            except Exception:
-                pass
-    else:
-        DB_PATH = BASE_DIR / "db.sqlite3"
-
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': DB_PATH,
-        }
-    }
 
 
 # Password validation
@@ -185,5 +187,5 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'spavitra9211@gmail.com'
-EMAIL_HOST_PASSWORD = 'tullchqntclxsehv'
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "spavitra9211@gmail.com")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "tullchqntclxsehv")
