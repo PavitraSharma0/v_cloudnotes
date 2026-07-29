@@ -56,9 +56,37 @@ def ai_ask(request):
 
 def generate_ai_reply(message: str) -> str:
     """
-    Generate AI Study response using Gemini API if key exists,
-    otherwise fallback to an intelligent study assistant engine.
+    Generate AI Study response using Groq LLaMA-3.3-70B API,
+    with fallback to Gemini API or study assistant engine.
     """
+    groq_key = os.getenv("GROQ_API_KEY")
+    if groq_key:
+        try:
+            url = "https://api.groq.com/openai/v1/chat/completions"
+            headers = {
+                "Authorization": f"Bearer {groq_key}",
+                "Content-Type": "application/json",
+                "User-Agent": "CloudNotes-AI/1.0",
+            }
+            data = {
+                "model": "llama-3.3-70b-versatile",
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": "You are CloudNotes AI, a friendly, intelligent, and concise study assistant for students. Explain concepts clearly with structure and examples."
+                    },
+                    {"role": "user", "content": message}
+                ]
+            }
+            req = urllib.request.Request(url, data=json.dumps(data).encode("utf-8"), headers=headers)
+            with urllib.request.urlopen(req, timeout=12) as response:
+                res_data = json.loads(response.read().decode("utf-8"))
+                reply = res_data["choices"][0]["message"]["content"]
+                if reply and reply.strip():
+                    return reply.strip()
+        except Exception:
+            pass
+
     gemini_key = os.getenv("GEMINI_API_KEY")
     if gemini_key:
         try:
@@ -101,10 +129,10 @@ def generate_ai_reply(message: str) -> str:
             "Share your topic if you'd like outline suggestions!"
         )
 
-    if 'python' in msg_lower or 'code' in msg_lower or 'program' in msg_lower:
+    if 'python' in msg_lower or 'code' in msg_lower or 'program' in msg_lower or 'java' in msg_lower:
         return (
             "Programming Help 💻:\n\n"
-            "I can assist with Python, JavaScript, HTML/CSS, Django, and algorithms.\n"
+            "I can assist with Java, Python, JavaScript, HTML/CSS, Django, and algorithms.\n"
             "Paste your code snippet or describe the problem/bug you're encountering!"
         )
 
