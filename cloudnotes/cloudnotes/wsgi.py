@@ -1,15 +1,25 @@
-import os
-import sys
+"""
+WSGI config for cloudnotes project.
 
-# Ensure the Django project directory is in Python path for Vercel serverless execution
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-if BASE_DIR not in sys.path:
-    sys.path.append(BASE_DIR)
+It exposes the WSGI callable as a module-level variable named ``application``.
+
+For more information on this file, see
+https://docs.djangoproject.com/en/6.0/howto/deployment/wsgi/
+"""
+
+import os
 
 from django.core.wsgi import get_wsgi_application
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'cloudnotes.settings')
 
 application = get_wsgi_application()
-app = application
+
+# Run migrations automatically on Vercel serverless environment for SQLite
+if os.getenv("VERCEL") == "1" or os.getenv("VERCEL_ENV") is not None:
+    try:
+        from django.core.management import call_command
+        call_command('migrate', interactive=False)
+    except Exception as e:
+        print(f"Serverless auto-migration note: {e}")
 

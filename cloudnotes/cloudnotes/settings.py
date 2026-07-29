@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 import os
 from pathlib import Path
+import shutil
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -89,12 +90,55 @@ WSGI_APPLICATION = 'cloudnotes.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+if DATABASE_URL:
+    try:
+        import dj_database_url
+        DATABASES = {
+            'default': dj_database_url.config(
+                default=DATABASE_URL,
+                conn_max_age=600,
+                conn_health_checks=True,
+            )
+        }
+    except ImportError:
+        import urllib.parse
+        url = urllib.parse.urlparse(DATABASE_URL)
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.postgresql',
+                'NAME': url.path[1:],
+                'USER': url.username,
+                'PASSWORD': url.password,
+                'HOST': url.hostname,
+                'PORT': url.port or '',
+            }
+        }
+else:
+    IS_SERVERLESS = (
+        os.getenv("VERCEL") == "1"
+        or os.getenv("VERCEL_ENV") is not None
+        or not os.access(BASE_DIR, os.W_OK)
+    )
+
+    if IS_SERVERLESS:
+        DB_PATH = Path("/tmp") / "db.sqlite3"
+        seed_db = BASE_DIR / "db.sqlite3"
+        if not DB_PATH.exists() and seed_db.exists():
+            try:
+                shutil.copy2(seed_db, DB_PATH)
+            except Exception:
+                pass
+    else:
+        DB_PATH = BASE_DIR / "db.sqlite3"
+
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': DB_PATH,
+        }
     }
-}
 
 
 # Password validation
