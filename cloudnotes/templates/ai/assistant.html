@@ -163,21 +163,34 @@ form.addEventListener('submit', function(e) {
     },
     body: JSON.stringify({ message })
   })
-  .then(res => res.json())
+  .then(res => {
+    if (!res.ok) throw new Error('Server response error');
+    return res.json();
+  })
   .then(data => {
     typingIndicator.style.display = 'none';
-    addMessage(data.reply, 'ai');
+    if (data.reply) {
+      addMessage(data.reply, 'ai');
+    } else if (data.error) {
+      addMessage('Sorry: ' + data.error, 'ai');
+    }
+  })
+  .catch(err => {
+    typingIndicator.style.display = 'none';
+    addMessage('Sorry, could not process your request right now. Please try again!', 'ai');
   });
 });
 
 function addMessage(text, sender) {
+  const formattedText = text.replace(/\n/g, '<br>');
+  const userInitial = '{{ user.username.0|upper }}';
   const html = `
     <div class="message ${sender}">
       <div class="message-avatar">
-        ${sender === 'user' ? '{{ user.first_name.0|upper }}{{ user.last_name.0|upper }}' : '🤖'}
+        ${sender === 'user' ? userInitial : '🤖'}
       </div>
       <div class="message-content">
-        <div class="message-bubble">${text}</div>
+        <div class="message-bubble">${formattedText}</div>
         <div class="message-time">just now</div>
       </div>
     </div>
