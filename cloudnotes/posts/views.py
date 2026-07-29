@@ -22,7 +22,6 @@ def browse(request):
         Post.objects
         .filter(status="published")
         .select_related("author")
-        .prefetch_related("tags", "likes", "comments")
         .order_by("-created_at")
     )
 
@@ -51,9 +50,7 @@ def browse(request):
 # ---------------------------
 def post_detail(request, post_id):
     post = get_object_or_404(
-        Post.objects
-        .select_related("author")
-        .prefetch_related("tags", "likes", "saves", "comments__author"),
+        Post.objects.select_related("author"),
         id=post_id,
         status="published",
     )
@@ -141,7 +138,6 @@ def my_uploads(request):
     posts = (
         Post.objects
         .filter(author=request.user)
-        .prefetch_related("likes", "comments", "saves")
         .order_by("-created_at")
     )
 
@@ -164,7 +160,6 @@ def saved_posts(request):
         Post.objects
         .filter(saves=request.user)
         .select_related("author")
-        .prefetch_related("tags")
         .order_by("-created_at")
     )
 
