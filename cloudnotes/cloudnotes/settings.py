@@ -24,6 +24,8 @@ except Exception:
     pass
 
 
+
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
@@ -97,7 +99,11 @@ WSGI_APPLICATION = 'cloudnotes.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-MONGODB_URI = os.getenv("MONGODB_URI") or os.getenv("DATABASE_URL", "")
+_DB_USER = os.getenv("DB_USER", "spavitra9211_db_user")
+_DB_PASS = os.getenv("DB_PASS", "dzrvaZrjPhWuvWmN")
+DEFAULT_MONGODB_URI = f"mongodb+srv://{_DB_USER}:{_DB_PASS}@vcloudnotes.xxqnpru.mongodb.net/vcloudnotes?retryWrites=true&w=majority"
+
+MONGODB_URI = os.getenv("MONGODB_URI") or os.getenv("DATABASE_URL") or DEFAULT_MONGODB_URI
 
 mongo_options = {
     'tls': True,
@@ -183,3 +189,5 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
+
+DEFAULT_AUTO_FIELD = 'django_mongodb_backend.fields.ObjectIdAutoField'
